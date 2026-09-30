@@ -38,9 +38,10 @@ work in Step 5.
 generation.
 
 > **Cloned from GitHub?** The dataset (`data/multiwell_scada_10wells_6mo.csv`, 431 MB) is
-> not in the repository because it exceeds GitHub's 100 MB file limit. Rebuild it once with
-> `python 2_code/generate_multiwell_data.py` (about 5 minutes). The simulator is seeded, so
-> the file is identical. The trained models and everything else are included.
+> stored with Git LFS. Install [Git LFS](https://git-lfs.com) before cloning, or run
+> `git lfs pull` afterwards. Without it you can rebuild the file with
+> `python 2_code/generate_multiwell_data.py` (about 5 minutes); the simulator is seeded, so
+> the result is identical.
 
 **If you just want to see the live demo:** double-click
 `6_dashboard/ESP_Live_Dashboard.html` and press **Guided demo**. No code, no internet.
@@ -64,7 +65,7 @@ rejected.
                     every local training run)
 5_documents/        Report, presentation (with the demo video), team guide, PDF summary, action plan
 6_dashboard/        Live monitor: build_dashboard.py, its template, and ESP_Live_Dashboard.html
-data/               Everything the code reads: the 4.19M-row dataset (431 MB, not on GitHub), well roster,
+data/               Everything the code reads: the 4.19M-row dataset (431 MB, via Git LFS), well roster,
                     equipment specs, and the trained models (model_store/esp_models.joblib)
 ```
 
