@@ -1,0 +1,152 @@
+Horizon H = 30 minutes
+Train wells (fully seen): [np.int64(1), np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16)]
+Held-out test wells (never seen): [np.int64(8), np.int64(9), np.int64(10)]
+Time-holdout within train wells: final 6 weeks used as validation
+Features: z-score normalized PER WELL (fit-period baseline for train wells; first-30-days calibration baseline for held-out test wells)
+
+=== Well equipment specs & safe operating band ===
+  Well 1: Motor=HS 456 Series 562 Motor, Protector=Single Protector - Labyrinth, 1800 lb, GasSeparator=None (natural separation only) (25% eff), Pump=Radial-Flow Pump, D-1750, 130 stages
+    Safe Hz band: [35, 63] Hz, BEP=50 Hz, dominant causes: GAS_LOCK
+  Well 2: Motor=HT 500 Series 562 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=Rotary Gas Separator, RGS-538 (85% eff), Pump=Mixed-Flow Pump, GC-4000, 65 stages
+    Safe Hz band: [40, 68] Hz, BEP=55 Hz, dominant causes: UNDERLOAD
+  Well 3: Motor=HS 562 Series 562 Motor, Protector=Tandem Protector - Positive Seal, 3200 lb, GasSeparator=Reverse-Flow Gas Separator, RFS-400 (65% eff), Pump=Mixed-Flow Pump, GC-3300, 78 stages
+    Safe Hz band: [38, 67] Hz, BEP=54 Hz, dominant causes: HIGH_TEMP
+  Well 4: Motor=HS 456 Series 562 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=Reverse-Flow Gas Separator, RFS-400 (65% eff), Pump=Mixed-Flow Pump, GC-4000, 65 stages
+    Safe Hz band: [40, 68] Hz, BEP=55 Hz, dominant causes: HIGH_DISCHARGE
+  Well 5: Motor=HS 562 Series 562 Motor, Protector=Single Protector - Labyrinth, 1800 lb, GasSeparator=Rotary Gas Separator, RGS-538 (85% eff), Pump=Mixed-Flow Pump, GC-4000, 65 stages
+    Safe Hz band: [40, 65] Hz, BEP=55 Hz, dominant causes: VIBRATION
+  Well 6: Motor=HT 500 Series 562 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=Reverse-Flow Gas Separator, RFS-400 (65% eff), Pump=Mixed-Flow Pump, GC-4000, 65 stages
+    Safe Hz band: [40, 68] Hz, BEP=55 Hz, dominant causes: LOW_VOLTAGE
+  Well 7: Motor=HS 562 Series 562 Motor, Protector=Tandem Protector - Positive Seal, 3200 lb, GasSeparator=Reverse-Flow Gas Separator, RFS-400 (65% eff), Pump=Mixed-Flow Pump, GC-4000, 65 stages
+    Safe Hz band: [40, 70] Hz, BEP=55 Hz, dominant causes: GAS_LOCK, HIGH_TEMP
+  Well 8: Motor=HD 375 Series 456 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=Reverse-Flow Gas Separator, RFS-400 (65% eff), Pump=Mixed-Flow Pump, GC-2700, 92 stages
+    Safe Hz band: [40, 65] Hz, BEP=52 Hz, dominant causes: UNDERLOAD, VIBRATION
+  Well 9: Motor=HS 456 Series 562 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=Rotary Gas Separator, RGS-538 (85% eff), Pump=Mixed-Flow Pump, GC-3300, 78 stages
+    Safe Hz band: [38, 67] Hz, BEP=54 Hz, dominant causes: HIGH_DISCHARGE, LOW_VOLTAGE
+  Well 10: Motor=HS 562 Series 562 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=None (natural separation only) (25% eff), Pump=Mixed-Flow Pump, GC-3300, 78 stages
+    Safe Hz band: [38, 67] Hz, BEP=54 Hz, dominant causes: GAS_LOCK, VIBRATION, LOW_VOLTAGE
+  Well 11: Motor=HS 456 Series 562 Motor, Protector=Tandem Protector - Positive Seal, 3200 lb, GasSeparator=Reverse-Flow Gas Separator, RFS-400 (65% eff), Pump=Mixed-Flow Pump, GC-2700, 92 stages
+    Safe Hz band: [40, 65] Hz, BEP=52 Hz, dominant causes: UNDERLOAD
+  Well 12: Motor=HS 562 Series 562 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=Rotary Gas Separator, RGS-538 (85% eff), Pump=Mixed-Flow Pump, GC-4000, 65 stages
+    Safe Hz band: [40, 68] Hz, BEP=55 Hz, dominant causes: HIGH_TEMP
+  Well 13: Motor=HS 562 Series 562 Motor, Protector=Single Protector - Labyrinth, 1800 lb, GasSeparator=Rotary Gas Separator, RGS-538 (85% eff), Pump=Mixed-Flow Pump, GC-3300, 78 stages
+    Safe Hz band: [38, 65] Hz, BEP=54 Hz, dominant causes: HIGH_DISCHARGE
+  Well 14: Motor=HS 562 Series 562 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=Rotary Gas Separator, RGS-538 (85% eff), Pump=Radial-Flow Pump, D-1750, 130 stages
+    Safe Hz band: [35, 63] Hz, BEP=50 Hz, dominant causes: VIBRATION
+  Well 15: Motor=HT 500 Series 562 Motor, Protector=Tandem Protector - Labyrinth/Bag, 2500 lb, GasSeparator=Rotary Gas Separator, RGS-538 (85% eff), Pump=Mixed-Flow Pump, GC-4000, 65 stages
+    Safe Hz band: [40, 68] Hz, BEP=55 Hz, dominant causes: LOW_VOLTAGE
+  Well 16: Motor=HS 562 Series 562 Motor, Protector=Single Protector - Labyrinth, 1800 lb, GasSeparator=Reverse-Flow Gas Separator, RFS-400 (65% eff), Pump=Mixed-Flow Pump, GC-3300, 78 stages
+    Safe Hz band: [38, 65] Hz, BEP=54 Hz, dominant causes: GAS_LOCK
+
+=== UNSUPERVISED: Clustering ===
+K-Means (k=6) silhouette (normalized features): 0.231
+K-Means cluster -> failure-within-H rate:
+kmeans_cluster
+0    0.001776
+1    0.000000
+2    0.001651
+3    0.000000
+4    0.000000
+5    0.000000
+DBSCAN: 4 clusters found. Failure rate: outliers=0.0027 vs. clustered-normal=0.0015
+
+=== SUPERVISED STAGE 1: Failure detection - models vs. baselines ===
+                             Model  Val ROC-AUC  Test Accuracy  Test Precision  Test Recall  Test F1  Test ROC-AUC
+               Logistic Regression     0.717410       0.851481        0.007668     0.261515 0.014899      0.615075
+                     Random Forest     0.820258       0.995530        0.127072     0.006970 0.013215      0.662504
+                           XGBoost     0.841337       0.994791        0.068712     0.016970 0.027217      0.625988
+    Baseline: fixed-threshold rule          NaN       0.975815        0.000719     0.003333 0.001182           NaN
+Baseline: persistence (last value)          NaN       0.999714        0.966667     0.966667 0.966667           NaN
+
+Best model (selected on VALIDATION ROC-AUC, never test): XGBoost
+Stage 1 features: 44 (raw + rolling)
+Alarm policy (tuned on validation, cost-weighted 200:1): per-well top 5.0% of that well's own scores, persistence=5 consecutive minutes
+Per-well alert thresholds (held-out): well 8: 0.0890, well 9: 0.0345, well 10: 0.0330
+Minute-level confusion matrix (pre-persistence): TN=727327 FP=37785 FN=2662 TP=638
+Trips in held-out wells: 110
+Caught (>=1 alarm in prior 180 min): 35 (32%)
+Missed failures: 75 (68%)
+False-alarm EVENTS: 1121 (~61.6 per well per month)
+Total alarms raised: 1212
+Average lead time: 110.6 min (median 153.0 min)
+Estimated downtime avoided: ~105 hours across held-out wells
+
+Alarm-policy grid searched on validation (top 10 by cost):
+ n_persist  quantile  caught  missed  false_alarms   cost
+         5     0.950      35       8          1440 3040.0
+         3     0.990      30      13           655 3255.0
+         3     0.975      33      10          1386 3386.0
+         1     0.990      34       9          1712 3512.0
+        10     0.950      29      14           771 3571.0
+         3     0.950      36       7          2256 3656.0
+         1     0.995      29      14          1021 3821.0
+         5     0.975      28      15           858 3858.0
+         3     0.995      25      18           341 3941.0
+         5     0.990      24      19           372 4172.0
+
+Trade-off curve on held-out wells (REPORTED ONLY - policy above was chosen on validation):
+ persist_min  top_pct_of_scores  caught  caught_pct  missed  false_alarm_events  fa_per_well_month  avg_lead_min
+           1                0.1      17          15      93                 173                9.5          44.8
+           1                0.5      24          22      86                 628               34.5          70.1
+           1                1.0      28          25      82                1080               59.3          82.5
+           1                2.5      42          38      68                2175              119.5          82.1
+           1                5.0      52          47      58                3784              207.9          93.0
+           3                0.1      13          12      97                  63                3.5          48.2
+           3                0.5      20          18      90                 235               12.9          80.2
+           3                1.0      24          22      86                 461               25.3          80.7
+           3                2.5      30          27      80                 962               52.9         100.5
+           3                5.0      41          37      69                1684               92.5         101.0
+           5                0.1      12          11      98                  36                2.0          27.4
+           5                0.5      15          14      95                 151                8.3          77.4
+           5                1.0      19          17      91                 298               16.4          90.0
+           5                2.5      25          23      85                 624               34.3         111.2
+           5                5.0      35          32      75                1121               61.6         110.6
+          10                0.1       5           5     105                  12                0.7           8.4
+          10                0.5      10           9     100                  74                4.1         110.9
+          10                1.0      12          11      98                 146                8.0         108.1
+          10                2.5      20          18      90                 348               19.1         123.7
+          10                5.0      26          24      84                 615               33.8         129.6
+
+=== PER-MODEL event-level performance on held-out wells (each at its own validation-tuned policy) ===
+              Model  Val ROC-AUC  Test ROC-AUC  policy_top_pct  policy_persist_min  caught  caught_pct  missed  nuisance_alarms  fa_per_well_month  avg_lead_min  median_lead_min
+Logistic Regression        0.717         0.615             0.1                   1      54          49      56              267               14.7          19.4              6.0
+      Random Forest        0.820         0.663             5.0                   3      44          40      66             1602               88.0         103.1            163.5
+            XGBoost        0.841         0.626             5.0                   5      35          32      75             1121               61.6         110.6            153.0
+
+=== PER-WELL breakdown (selected model, shipped policy) ===
+ well                  dominant_causes  trips  caught  caught_pct  missed  nuisance_alarms  fa_per_month  avg_lead_min
+    8             UNDERLOAD, VIBRATION     29      11          38      18              333          54.9         101.5
+    9      HIGH_DISCHARGE, LOW_VOLTAGE     34       8          24      26              372          61.3         142.8
+   10 GAS_LOCK, VIBRATION, LOW_VOLTAGE     47      16          34      31              416          68.6         100.8
+
+=== Catch rate by failure cause (selected model) ===
+                caught  trips  caught_pct
+cause                                    
+GAS_LOCK             6     16        38.0
+HIGH_DISCHARGE       4     11        36.0
+LOW_VOLTAGE          8     43        19.0
+UNDERLOAD            5     18        28.0
+VIBRATION           12     22        55.0
+
+=== SUPERVISED STAGE 2: Root-cause classification ===
+Accuracy on held-out wells: 0.615
+                precision    recall  f1-score   support
+
+      GAS_LOCK       0.00      0.00      0.00       124
+HIGH_DISCHARGE       0.00      0.00      0.00        70
+     HIGH_TEMP       0.00      0.00      0.00         0
+   LOW_VOLTAGE       0.53      1.00      0.69       379
+     UNDERLOAD       0.00      0.00      0.00       140
+     VIBRATION       0.99      0.96      0.98       173
+
+      accuracy                           0.62       886
+     macro avg       0.25      0.33      0.28       886
+  weighted avg       0.42      0.62      0.49       886
+
+=== Frequency-related vs. not (per cause) - drives the recommendation branch ===
+  GAS_LOCK: frequency adjustment applicable (clip to well safe_min_hz/safe_max_hz)
+  UNDERLOAD: NOT frequency-related -> flag inspection instead
+  HIGH_TEMP: frequency adjustment applicable (clip to well safe_min_hz/safe_max_hz)
+  HIGH_DISCHARGE: frequency adjustment applicable (clip to well safe_min_hz/safe_max_hz)
+  VIBRATION: NOT frequency-related -> flag inspection instead
+  LOW_VOLTAGE: NOT frequency-related -> flag inspection instead

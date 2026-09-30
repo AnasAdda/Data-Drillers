@@ -1,0 +1,103 @@
+OPTIMAL OPERATING FREQUENCY FOR UNDERLOAD-PRONE WELLS
+======================================================================
+
+Objective: maximise produced volume, not minimise trips. Running slower
+costs rate every minute; running too fast costs whole hours to trips. The
+optimum is an interior point between the two.
+
+Production proxy: rate ~ frequency (affinity law), zero while shut down.
+
+=== 1. Frequency sweep (same well, same seed, fixed setpoint) ===
+ well   hz  pct_of_bep  trips  underload  downtime_hr    production  vs_bep_pct
+    8 44.2          85     11          0         32.4 119707.809514      -14.16
+    8 46.8          90     11          0         32.4 126685.136389       -9.16
+    8 49.4          95     17          6         46.9 133096.843194       -4.56
+    8 52.0         100     22         11         61.8 139453.137222        0.00
+    8 54.6         105     28         17         79.1 145520.695972        4.35
+    8 57.2         110     32         22         92.6 151598.972153        8.71
+    8 59.8         115     42         31        112.0 157207.122083       12.73
+    8 62.4         120     45         34        125.5 163220.880069       17.04
+   10 45.9          85     16          0         47.2 123347.903056      -14.23
+   10 48.6          90     17          0         48.3 130817.774583       -9.03
+   10 51.3          95     21          5         62.6 137459.176944       -4.42
+   10 54.0         100     29         11         77.8 143808.938194        0.00
+   10 56.7         105     35         16         99.0 149964.079931        4.28
+   10 59.4         110     40         22        119.9 155846.622083        8.37
+   10 62.1         115     45         26        125.9 162160.671389       12.76
+   10 64.8         120     54         34        147.9 167634.454236       16.57
+
+Well 8: production optimum at 62.4 Hz (120% of BEP), +17.04% vs running at BEP, 34 underload trips
+Well 10: production optimum at 64.8 Hz (120% of BEP), +16.57% vs running at BEP, 34 underload trips
+
+=== 1b. Break-even downtime per trip ===
+ well   hz  pct_of_bep  trips_avoided  production_given_up_pct  breakeven_hours_per_trip
+    8 44.2        85.0             11                   -14.16                      56.2
+    8 46.8        90.0             11                    -9.16                      36.4
+    8 49.4        95.0              5                    -4.56                      39.8
+   10 45.9        85.0             13                   -14.23                      47.8
+   10 48.6        90.0             12                    -9.03                      32.9
+   10 51.3        95.0              8                    -4.42                      24.1
+Slowing the well only pays if an avoided trip would have kept it down
+longer than the break-even hours shown.
+
+=== 2. Adaptive control vs. best fixed setpoint ===
+ well  bep_hz  best_fixed_hz  adaptive_mean_hz  adaptive_min_hz  underload_at_bep  underload_best_fixed  underload_adaptive  prod_best_fixed_pct  prod_adaptive_pct
+    8    52.0           62.4             46.71             45.8                11                    34                   0                17.04              -9.24
+   10    54.0           64.8             48.28             47.5                11                    34                   0                16.57              -9.25
+
+
+=== INTERPRETATION - WHAT THIS CAN AND CANNOT SETTLE ===
+
+WHAT THE SWEEP SAYS, AND WHY IT IS NOT THE ANSWER
+The sweep reports that production keeps rising up to 120% of BEP (+17%),
+despite trips tripling from 11 to 34. That is an artifact of the simulator,
+not a recommendation:
+
+  * The production proxy uses the affinity law (Q proportional to f), which
+    only holds near the pump's design point. Past BEP a real pump moves off
+    its curve and the extra speed does not buy proportional flow.
+  * Raising frequency increases drawdown, which under a simple IPR increases
+    inflow as well - so nothing saturates. The real ceiling is pump
+    submergence: the fluid level cannot be pulled below the intake. That
+    constraint is not modelled here.
+  * A trip costs only a few hours of automatic restart in this simulation. It
+    carries no workover risk and no run-life penalty, whereas repeated
+    restarts are exactly what shortens ESP life in the field.
+
+Standard practice is not to run deliberately above BEP, so recommendations are
+capped there regardless of what the proxy says.
+
+WHAT IS ACTUALLY TRANSFERABLE: THE BREAK-EVEN RULE
+The break-even table does not depend on the invented production constants. It
+is built from two quantities that were measured directly - production given up,
+and trips avoided - so it transfers to real economics:
+
+    Reducing well 8 from 52 Hz to 47 Hz (90% of BEP) eliminates all 11
+    underload trips and gives up 9.2% of rate. That pays only if each avoided
+    trip would otherwise keep the well down longer than ~36 hours.
+
+So the decision rule for an underload-prone well is:
+
+    if (expected downtime per trip) > (break-even hours) -> slow the well down
+    else                                                 -> accept the trips
+
+With automatic restart in a few hours, the arithmetic says accept the trips.
+With a remote well waiting a day or two for a crew, it says slow it down. Same
+well, opposite answer, decided entirely by restart time - which is a field fact,
+not a modelling choice.
+
+WHAT THE METHOD DELIVERS
+  1. Per-well drawdown coefficient k (psi/Hz), fitted from that well's own
+     sensor history - recovered 9.27 / 8.38 / 10.36 against a true 9.0.
+  2. A frequency recommendation derived from k, clipped to the well's own
+     equipment band, escalating to inspection when the floor binds.
+  3. A closed-loop back-test showing the control genuinely works: underload
+     trips 22 -> 0 on the same wells and the same seeds
+     (see frequency_recommendation.py).
+  4. A break-even figure telling an engineer whether to use it.
+
+WHAT ONLY REAL DATA CAN SETTLE
+Whether the optimum sits below BEP at all, and by how much. That depends on the
+well's true inflow performance, the real cost of a trip including run-life, and
+actual restart times - none of which a synthetic dataset can supply honestly.
+This is the first place the pipeline should be pointed at real historical wells.

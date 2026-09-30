@@ -1,0 +1,23 @@
+UNDERLOAD FREQUENCY RECOMMENDATION - closed-loop back-test
+====================================================================
+
+Rule: fit Pi = a - k*f on each well's own first 30 days, then reduce
+frequency by (deficit + margin)/k whenever intake pressure falls more than
+18 psi below what the current frequency should deliver.
+Every recommendation is clipped to the well's own equipment-rated band; if
+the floor binds, the well escalates to inspection instead.
+
+Per-well drawdown coefficients fitted from sensor data only:
+  well 8: k = 9.27 psi/Hz, a = 2589 psi
+  well 9: k = 8.38 psi/Hz, a = 2521 psi
+  well 10: k = 10.36 psi/Hz, a = 2651 psi
+  (simulator ground truth: 9.0 psi/Hz)
+
+Closed-loop back-test, same wells and same random seeds:
+ well  underload_trips_before  underload_trips_after  all_trips_before  all_trips_after  downtime_hr_before  downtime_hr_after  mean_hz_before  mean_hz_after  production_change_pct  interventions  escalations
+    8                      11                      0                22               11                61.8               32.4           51.82          46.30                 -10.04           1562          695
+   10                      11                      0                29               14                77.8               36.3           53.65          38.41                 -27.71          14931        14915
+
+Underload trips: 22 -> 0 (100% avoided)
+Total downtime: 140 h -> 69 h (+71 h)
+Mean production change: -18.88%

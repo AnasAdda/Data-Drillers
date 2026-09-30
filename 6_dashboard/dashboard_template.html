@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP Live Monitor</title>
+<style>
+:root{
+  --bg:#070d18; --panel:#0e1627; --panel2:#121c30; --line:#1d2a42; --grid:#17233a;
+  --text:#e7eef9; --muted:#8193b0; --dim:#56678a;
+  --risk:#5aa9ff; --thr:#f5a524; --alarm:rgba(245,165,36,.20); --trip:#ff4d6d;
+  --ok:#2fd28a; --down:rgba(148,163,184,.13); --cal:rgba(129,147,176,.07);
+  --GAS_LOCK:#a78bfa; --UNDERLOAD:#38bdf8; --HIGH_TEMP:#fb923c; --HIGH_DISCHARGE:#f472b6;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:14px/1.35 "Segoe UI",system-ui,sans-serif;
+  display:flex;flex-direction:column;min-height:100vh;padding:14px 18px 12px;gap:12px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* header */
+header{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:20px;letter-spacing:.2px}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.brand b{color:var(--text);font-weight:600}
+.status{display:flex;align-items:center;gap:14px;margin-left:auto}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
+  font-weight:700;font-size:12px;letter-spacing:1.2px;border:1px solid var(--line);background:var(--panel)}
+.pill i{width:9px;height:9px;border-radius:50%;background:var(--dim)}
+.pill.live{color:#ffd1d9;border-color:#5a1d2b;background:#1d0f17}
+.pill.live i{background:var(--trip);animation:pulse 1.1s infinite}
+.pill.cal{color:#ffe3b0;border-color:#5a4318;background:#1b150a}
+.pill.cal i{background:var(--thr);animation:pulse 1.1s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.clock{font-family:var(--mono);font-size:15px}
+.clock small{display:block;color:var(--muted);font-size:11px;font-family:"Segoe UI",sans-serif}
+.controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+button{font:600 12px "Segoe UI",sans-serif;color:var(--text);background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:7px 11px;cursor:pointer}
+button:hover{border-color:#34507a}
+button.on{background:#16335a;border-color:#2f6bb5}
+button.primary{background:#1b5fd6;border-color:#1b5fd6}
+button.demo{background:#0f3d33;border-color:#1f7a63;color:#bff5e4}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;min-width:0}
+.k-label{color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.k-val{font-size:26px;font-weight:700;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k-sub{color:var(--muted);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:6px;background:var(--grid);border-radius:4px;margin-top:8px;position:relative;overflow:visible}
+.bar b{display:block;height:100%;border-radius:4px;background:var(--risk);width:0}
+.bar em{position:absolute;top:-3px;width:2px;height:12px;background:var(--thr)}
+#kAlarm.alarm{background:#23160a;border-color:#7a4d10;animation:glow 1s infinite}
+@keyframes glow{50%{border-color:#f5a524}}
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#081018}
+
+/* main */
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;flex:1;min-height:0}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;gap:10px}
+.panel-h h2{margin:0;font-size:13px;letter-spacing:.3px}
+.legend{display:flex;gap:12px;color:var(--muted);font-size:11px;flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+canvas{display:block;width:100%}
+#risk{height:220px}
+.sensors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sensor .panel-h{margin-bottom:2px}
+.sensor h2{font-size:12px;color:var(--muted);font-weight:600}
+.sensor .v{font-family:var(--mono);font-size:14px}
+.sensor canvas{height:86px}
+.right{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+#diag .cause{font-size:22px;font-weight:700;margin:4px 0 2px}
+#diag .act{color:var(--muted);font-size:12.5px}
+#dFreq{margin-top:10px;padding-top:10px;border-top:1px solid var(--grid);display:none}
+#dFreq.show{display:block}
+#dFreq .fl{color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+#dFreq .fv{font-family:var(--mono);font-size:22px;font-weight:700;margin:3px 0;color:#34d399}
+#dFreq .fv.hold{color:var(--text)} #dFreq .fv.esc{color:var(--trip)}
+#dFreq .fs{color:var(--muted);font-size:12px}
+#dFreq .be{margin-top:6px;font-size:12px;color:#cbd5e1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.log{flex:1;min-height:160px;overflow:hidden;display:flex;flex-direction:column}
+#log{list-style:none;margin:0;padding:0;overflow:auto;flex:1}
+#log li{padding:7px 2px;border-bottom:1px solid var(--grid);font-size:12.5px;animation:in .35s ease}
+#log li:first-child{background:linear-gradient(90deg,rgba(90,169,255,.08),transparent)}
+#log time{display:block;font-family:var(--mono);color:var(--dim);font-size:11px}
+@keyframes in{from{opacity:0;transform:translateY(-4px)}}
+.spec{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12px}
+.spec dt{color:var(--muted)} .spec dd{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.good{color:var(--ok)} .bad{color:var(--trip)} .warn{color:var(--thr)}
+
+/* timeline */
+.timeline{padding:8px 13px 10px}
+#tl{height:34px;cursor:pointer}
+.tl-h{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-bottom:4px}
+
+/* summary overlay */
+#sum{position:fixed;inset:0;background:rgba(4,8,15,.78);display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+#sum.show{display:flex;animation:in .5s ease}
+#sum .box{background:var(--panel);border:1px solid #2a3c5c;border-radius:16px;padding:26px 30px;max-width:760px;width:100%}
+#sum h3{margin:0 0 4px;font-size:22px}
+#sum p{color:var(--muted);margin:0 0 18px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.grid4 div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px}
+.grid4 b{display:block;font-size:26px}
+.grid4 span{color:var(--muted);font-size:12px}
+#sum .close{margin-top:18px}
+.foot{color:var(--dim);font-size:11px;text-align:center}
+
+@media (max-width:1100px){
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  main{grid-template-columns:1fr}
+  .sensors{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:640px){
+  body{padding:12px 16px}
+  .kpis,.sensors,.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .status{margin-left:0}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>ESP Live Monitor · Well <span id="wellId"></span></h1>
+    <p><b>New well</b> — never seen in training. Frozen models, streamed minute by minute.</p>
+  </div>
+  <div class="status">
+    <span id="pill" class="pill"><i></i><span id="pillTxt">PAUSED</span></span>
+    <div class="clock"><span id="clock">—</span><small id="day">—</small></div>
+  </div>
+  <div class="controls">
+    <button id="bDemo" class="demo" title="D">▶ Guided demo</button>
+    <button id="bPlay" class="primary" title="Space">▶ Play</button>
+    <div class="seg" id="speeds"></div>
+    <button id="bNext" title="N">⏭ Next alarm</button>
+    <button id="bReset" title="R">↺</button>
+  </div>
+</header>
+
+<section class="kpis">
+  <div class="card"><div class="k-label">Pump</div><div class="k-val" id="kPump">—</div><div class="k-sub" id="kPumpSub">—</div></div>
+  <div class="card"><div class="k-label">Trip risk (next 30 min)</div><div class="k-val num" id="kRisk">—</div>
+    <div class="bar"><b id="kRiskBar"></b><em id="kThrMark"></em></div></div>
+  <div class="card" id="kAlarm"><div class="k-label">Alarm</div><div class="k-val" id="kAlarmVal">—</div><div class="k-sub" id="kAlarmSub">—</div></div>
+  <div class="card"><div class="k-label">Shutdowns warned</div><div class="k-val num" id="kCaught">—</div><div class="k-sub" id="kCaughtSub">—</div></div>
+  <div class="card"><div class="k-label">Median warning</div><div class="k-val num" id="kLead">—</div><div class="k-sub">before the pump tripped</div></div>
+  <div class="card"><div class="k-label">Nuisance alarms</div><div class="k-val num" id="kFa">—</div><div class="k-sub" id="kFaSub">—</div></div>
+</section>
+
+<main>
+  <div class="left">
+    <div class="card">
+      <div class="panel-h"><h2>Predicted trip risk — frozen <span id="detName"></span> detector</h2>
+        <div class="legend">
+          <span style="--c:var(--risk)">risk score</span>
+          <span style="--c:var(--thr)">alarm threshold</span>
+          <span style="--c:rgba(245,165,36,.55)">alarm raised</span>
+          <span style="--c:var(--trip)">actual shutdown</span>
+          <span style="--c:rgba(148,163,184,.4)">pump down</span>
+        </div></div>
+      <canvas id="risk"></canvas>
+    </div>
+    <div class="sensors" id="sensors"></div>
+    <div class="card timeline">
+      <div class="tl-h"><span>Six months of well <span class="wid"></span> · click to jump</span><span id="tlInfo"></span></div>
+      <canvas id="tl"></canvas>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card" id="diag">
+      <div class="k-label">Root-cause model</div>
+      <div class="cause" id="dCause">—</div>
+      <div class="act" id="dAct">Watching. A cause is named when an alarm is raised.</div>
+      <div id="dFreq"><div class="fl">Frequency advice</div><div class="fv" id="fVal"></div><div class="fs" id="fSub"></div><div class="be" id="fBe"></div></div>
+    </div>
+    <div class="card log">
+      <div class="panel-h"><h2>Event log</h2><span class="k-sub">newest first</span></div>
+      <ul id="log"></ul>
+    </div>
+    <div class="card">
+      <div class="panel-h"><h2>Well <span class="wid"></span> equipment</h2></div>
+      <dl class="spec" id="spec"></dl>
+    </div>
+  </div>
+</main>
+<div class="foot" id="foot"></div>
+
+<div id="sum"><div class="box">
+  <h3>Well <span class="wid"></span> — six months, streamed live</h3>
+  <p id="sumSub"></p>
+  <div class="grid4" id="sumGrid"></div>
+  <p id="sumNote" style="margin:14px 0 0;font-size:12.5px"></p>
+  <button class="close" onclick="document.getElementById('sum').classList.remove('show')">Close</button>
+</div></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+"use strict";
+const D = JSON.parse(document.getElementById("data").textContent);
+const S = D.series, B = D.B, N = D.n_minutes, CAL = D.calib_end, LEN = S.risk.length, THR = D.threshold;
+const T0 = Date.parse(D.start + "Z");
+const _css = {};
+const css = n => _css[n] ?? (_css[n] = getComputedStyle(document.documentElement).getPropertyValue(n).trim());
+const CAUSE_COLOR = c => css("--" + c) || "#ccc";
+const ACTION = {
+  UNDERLOAD: "Pump is outrunning the well's inflow — the fluid level over the pump is falling.",
+  HIGH_DISCHARGE: "Discharge restriction — check the choke and scale in the flow line. No frequency model for this cause.",
+  GAS_LOCK: "Gas at the intake — check the gas separator. No frequency model for this cause.",
+  HIGH_TEMP: "Motor heating — verify cooling flow past the motor. No frequency model for this cause.",
+};
+const FA = D.freq_advice;
+const adviceOn = i => i * B >= CAL && S.alarm[i] === 1 && !S.down[i] && D.classes[S.cause[i]] === "UNDERLOAD" && S.rec[i] != null;
+const pretty = c => c.replace("_", " ");
+const FAST = N / 40, CLOSE = 45;
+const SPEEDS = [["30 min/s", 30], ["2 h/s", 120], ["1 day/s", 1440], ["6 mo/40 s", FAST]];
+
+// ---------- static text ----------
+document.getElementById("wellId").textContent = D.well;
+document.querySelectorAll(".wid").forEach(e => e.textContent = D.well);
+document.getElementById("detName").textContent = D.model.detector;
+const E = D.equipment;
+document.getElementById("spec").innerHTML = [
+  ["Motor", E.motor], ["Protector", E.protector], ["Gas separator", E.separator], ["Pump", E.pump],
+  ["Safe band", `${E.safe_min}–${E.safe_max} Hz (BEP ${E.bep} Hz)`],
+  ["Drawdown fit", `Pi = ${FA.a} − ${FA.k}·Hz  (k from days 1–30)`],
+  ["Trained on", `wells ${D.model.trained_on.join(", ")}`],
+].map(([k, v]) => `<dt>${k}</dt><dd title="${v}">${v}</dd>`).join("");
+document.getElementById("foot").textContent =
+  `Alarm = this well's top ${D.model.top_pct}% risk level (set from its first 30 days), held ${D.model.persist} consecutive minutes. ` +
+  `A shutdown counts as warned if an alarm was active in the ${D.model.window} min before it. Actual causes are revealed only when the pump trips.`;
+document.getElementById("kThrMark").style.left = (THR * 100) + "%";
+
+const SENSORS = [
+  ["cur", "Motor current", "A", 1], ["pi", "Intake pressure", "psi", 0], ["pd", "Discharge pressure", "psi", 0],
+  ["tm", "Motor temperature", "°F", 1], ["vib", "Vibration", "g", 3], ["freq", "Frequency <span style='color:#34d399;font-weight:600'>· - - advised</span>", "Hz", 1],
+];
+document.getElementById("sensors").innerHTML = SENSORS.map(([k, n]) =>
+  `<div class="card sensor"><div class="panel-h"><h2>${n}</h2><span class="v" id="v_${k}">—</span></div><canvas id="c_${k}"></canvas></div>`).join("");
+
+// ---------- state ----------
+let cur = 0, playing = false, speed = 1440, demo = false, win = 4 * 1440, dirty = true, ended = false;
+let evPtr = 0, lastTs = null;
+const EVENTS = [];
+EVENTS.push({ m: CAL, type: "calib" });
+D.alarms.forEach(a => { EVENTS.push({ m: a.s, type: "alarm", a }); if (!a.matched) EVENTS.push({ m: a.resolve, type: "clear", a }); });
+D.trips.forEach(t => EVENTS.push({ m: t.m, type: "trip", t }));
+EVENTS.sort((x, y) => x.m - y.m);
+
+// ---------- helpers ----------
+const fmtDate = (m, withTime = true) => {
+  const d = new Date(T0 + m * 60000), p = n => String(n).padStart(2, "0");
+  const s = `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
+  return withTime ? `${s} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}` : s;
+};
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const tick = m => { const d = new Date(T0 + m * 60000), p = n => String(n).padStart(2, "0");
+  return win > 2 * 1440 ? `${MON[d.getUTCMonth()]} ${d.getUTCDate()}` : `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`; };
+function prep(cv) {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const W = Math.max(1, Math.round(r.width * dpr)), H = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height);
+  return [g, r.width, r.height];
+}
+
+// ---------- charts ----------
+function drawChart(cv, key, opt) {
+  const [g, w, h] = prep(cv);
+  const pl = opt.risk ? 40 : 6, pr = 6, pt = 6, pb = opt.risk ? 20 : 4;
+  const x0 = cur - win, X = m => pl + (m - x0) / win * (w - pl - pr);
+  const i0 = Math.max(0, Math.floor(x0 / B)), i1 = Math.min(LEN - 1, Math.floor(cur / B));
+  const vals = S[key];
+  let lo = opt.lo, hi = opt.hi;
+  if (lo === undefined) {
+    lo = Infinity; hi = -Infinity;
+    for (let i = i0; i <= i1; i++) { if (S.down[i] || vals[i] == null) continue; lo = Math.min(lo, vals[i]); hi = Math.max(hi, vals[i]); }
+    if (key === "freq") for (let i = i0; i <= i1; i++) if (adviceOn(i)) { lo = Math.min(lo, S.rec[i]); hi = Math.max(hi, S.rec[i]); }
+    if (!isFinite(lo)) { lo = 0; hi = 1; }
+    const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.05 || 1; lo -= pad; hi += pad;
+  }
+  const Y = v => pt + (1 - (v - lo) / (hi - lo)) * (h - pt - pb);
+  // calibration region
+  if (x0 < CAL) { g.fillStyle = css("--cal"); g.fillRect(X(Math.max(x0, 0)), pt, X(Math.min(CAL, cur)) - X(Math.max(x0, 0)), h - pt - pb); }
+  // pump-down bands
+  g.fillStyle = css("--down");
+  for (let i = i0; i <= i1; i++) if (S.down[i]) { let j = i; while (j + 1 <= i1 && S.down[j + 1]) j++; g.fillRect(X(i * B), pt, X((j + 1) * B) - X(i * B), h - pt - pb); i = j; }
+  // alarm bands (never drawn past "now")
+  g.fillStyle = css("--alarm");
+  for (const a of D.alarms) { if (a.s > cur || a.e < x0) continue; const s = X(Math.max(a.s, x0)), e = X(Math.min(a.e + 1, cur)); g.fillRect(s, pt, Math.max(e - s, 1.5), h - pt - pb); }
+  // grid + axis
+  if (opt.risk) {
+    g.strokeStyle = css("--grid"); g.lineWidth = 1; g.fillStyle = css("--dim"); g.font = "11px Consolas, monospace";
+    for (const v of [0, .25, .5, .75, 1]) { g.beginPath(); g.moveTo(pl, Y(v)); g.lineTo(w - pr, Y(v)); g.stroke(); g.fillText(v.toFixed(2), 4, Y(v) + 4); }
+    const steps = [60, 180, 360, 720, 1440, 2880, 7 * 1440, 14 * 1440]; const st = steps.find(s => win / s <= 7) || steps.at(-1);
+    g.textAlign = "center";
+    for (let m = Math.ceil(Math.max(x0, 0) / st) * st; m <= cur; m += st) if (X(m) > pl + 20 && X(m) < w - 30) g.fillText(tick(m), X(m), h - 5);
+    g.textAlign = "left";
+    if (cur > CAL) { const xs = X(Math.max(CAL, x0)); g.strokeStyle = css("--thr"); g.setLineDash([6, 4]); g.lineWidth = 1.3;
+      g.beginPath(); g.moveTo(xs, Y(THR)); g.lineTo(X(cur), Y(THR)); g.stroke(); g.setLineDash([]); }
+    if (x0 < CAL && cur > 0) { g.fillStyle = css("--muted"); g.font = "11px Segoe UI, sans-serif";
+      const xm = (X(Math.max(x0, 0)) + X(Math.min(CAL, cur))) / 2; if (X(Math.min(CAL, cur)) - X(Math.max(x0, 0)) > 150) { g.textAlign = "center"; g.fillText("calibration — learning this well's baseline", xm, pt + 14); g.textAlign = "left"; } }
+  }
+  // line
+  const step = Math.max(1, Math.floor((i1 - i0) / (w * 1.5)));
+  const col = opt.color;
+  g.beginPath(); let pen = false, first = null, lastX = null;
+  for (let i = i0; i <= i1; i += step) {
+    let v = vals[i];
+    if (opt.risk && step > 1) { for (let j = i; j < Math.min(i + step, i1 + 1); j++) if (vals[j] != null && (v == null || vals[j] > v)) v = vals[j]; }
+    if (v == null || (!opt.risk && S.down[i] && key !== "cur" && key !== "freq")) { pen = false; continue; }
+    const x = X(i * B), y = Y(Math.max(lo, Math.min(hi, v)));
+    if (!pen) { g.moveTo(x, y); pen = true; if (first == null) first = x; } else g.lineTo(x, y); lastX = x;
+  }
+  g.strokeStyle = col; g.lineWidth = opt.risk ? 1.4 : 1.2; g.stroke();
+  if (key === "freq") {
+    g.beginPath(); let p2 = false;
+    for (let i = i0; i <= i1; i++) {
+      if (!adviceOn(i)) { p2 = false; continue; }
+      const x = X(i * B), y = Y(S.rec[i]); if (!p2) { g.moveTo(x, y); p2 = true; } else g.lineTo(x, y);
+    }
+    g.strokeStyle = "#34d399"; g.setLineDash([5, 3]); g.lineWidth = 1.6; g.stroke(); g.setLineDash([]);
+  }
+  // trips
+  for (const t of D.trips) {
+    if (t.m < x0 || t.m > cur) continue; const x = X(t.m);
+    g.strokeStyle = css("--trip"); g.lineWidth = opt.risk ? 2 : 1.4; g.beginPath(); g.moveTo(x, pt); g.lineTo(x, h - pb); g.stroke();
+    if (opt.risk && t.caught && t.lead && X(t.m) - X(t.m - t.lead) > 70) {
+      const xa = X(Math.max(t.m - t.lead, x0)), y = pt + 16;
+      g.strokeStyle = "#dbe7ff"; g.fillStyle = "#dbe7ff"; g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(xa, y); g.lineTo(x - 2, y); g.stroke();
+      g.beginPath(); g.moveTo(x - 2, y); g.lineTo(x - 8, y - 4); g.lineTo(x - 8, y + 4); g.fill();
+      g.font = "bold 12px Segoe UI, sans-serif"; g.textAlign = "center";
+      g.fillText(`${Math.round(t.lead)} min warning`, (xa + x) / 2, y - 5); g.textAlign = "left";
+    }
+  }
+  // "now" cursor
+  g.strokeStyle = "rgba(231,238,249,.35)"; g.lineWidth = 1; g.beginPath(); g.moveTo(X(cur), pt); g.lineTo(X(cur), h - pb); g.stroke();
+}
+
+function drawTimeline() {
+  const cv = document.getElementById("tl"), [g, w, h] = prep(cv);
+  const X = m => m / N * w;
+  g.fillStyle = "#101a2d"; g.fillRect(0, 8, w, h - 16);
+  g.fillStyle = "rgba(129,147,176,.18)"; g.fillRect(0, 8, X(CAL), h - 16);
+  g.fillStyle = "rgba(90,169,255,.22)"; g.fillRect(0, 8, X(cur), h - 16);
+  for (const a of D.alarms) if (a.s <= cur) { g.fillStyle = "rgba(245,165,36,.75)"; g.fillRect(X(a.s), 8, Math.max(1.5, X(Math.min(a.e, cur)) - X(a.s)), 6); }
+  for (const t of D.trips) if (t.m <= cur) { g.fillStyle = !t.scored ? "#6b7a96" : t.caught ? css("--ok") : css("--trip"); g.fillRect(X(t.m) - 1, 14, 3, h - 22); }
+  g.fillStyle = "#fff"; g.fillRect(X(cur) - 1, 2, 2, h - 4);
+}
+
+// ---------- events ----------
+function logItem(m, html) {
+  const li = document.createElement("li"); li.innerHTML = `<time>${fmtDate(m)}</time>${html}`;
+  const ul = document.getElementById("log"); ul.prepend(li); while (ul.children.length > 60) ul.lastChild.remove();
+}
+const chip = c => `<span class="chip" style="background:${CAUSE_COLOR(c)}">${pretty(c)}</span>`;
+function processEvents(silent) {
+  while (evPtr < EVENTS.length && EVENTS[evPtr].m <= cur) {
+    const e = EVENTS[evPtr++];
+    if (silent && e.m < cur - 7 * 1440) continue;   // after a jump, only log the last week
+    if (e.type === "calib") logItem(e.m, `<b>Calibration complete.</b> Alarm threshold set at <span class="num">${THR.toFixed(3)}</span> — this well's own top ${D.model.top_pct}%.`);
+    if (e.type === "alarm") logItem(e.m, `<span class="warn">⚠ <b>ALARM raised</b></span> · model suspects ${e.a.cause != null ? chip(D.classes[e.a.cause]) : "—"}`);
+    if (e.type === "clear") logItem(e.m, `<span style="color:var(--muted)">Alarm cleared — no shutdown followed (nuisance)</span>`);
+    if (e.type === "trip") {
+      const t = e.t;
+      if (!t.scored) logItem(t.m, `<span class="bad">⛔ <b>SHUTDOWN</b></span> · ${chip(t.cause)} · during calibration, not scored`);
+      else if (t.caught) logItem(t.m, `<span class="bad">⛔ <b>SHUTDOWN</b></span> · actual ${chip(t.cause)}<br><span class="good">✓ warned ${Math.round(t.lead)} min ahead</span>` +
+        (t.pcause != null ? ` · cause ${D.classes[t.pcause] === t.cause ? '<span class="good">✓ correct</span>' : '<span class="bad">✗ was ' + pretty(D.classes[t.pcause]) + "</span>"}` : ""));
+      else logItem(t.m, `<span class="bad">⛔ <b>SHUTDOWN</b></span> · actual ${chip(t.cause)}<br><span class="bad">✗ missed — no alarm beforehand</span>`);
+    }
+  }
+}
+function seek(m) {
+  m = Math.max(0, Math.min(N - 1, m));
+  if (m < cur) { evPtr = 0; document.getElementById("log").innerHTML = ""; }
+  cur = m; ended = false; processEvents(true); dirty = true;
+}
+
+// ---------- KPIs ----------
+function kpis() {
+  const k = Math.min(LEN - 1, Math.floor(cur / B));
+  document.getElementById("clock").textContent = fmtDate(cur);
+  document.getElementById("day").textContent = `day ${Math.floor(cur / 1440) + 1} of ${Math.round(N / 1440)} · ${speedLabel()}`;
+  const pill = document.getElementById("pill"), pt = document.getElementById("pillTxt");
+  pill.className = "pill" + (playing ? (cur < CAL ? " cal" : " live") : "");
+  pt.textContent = !playing ? (ended ? "END OF FEED" : "PAUSED") : cur < CAL ? "CALIBRATING" : "LIVE";
+
+  const down = S.down[k] === 1, f = S.freq[k];
+  const kp = document.getElementById("kPump");
+  kp.textContent = down ? "TRIPPED" : "RUNNING"; kp.className = "k-val " + (down ? "bad" : "good");
+  document.getElementById("kPumpSub").textContent = down ? "waiting for restart" : `${f != null ? f.toFixed(1) : "—"} Hz · safe ${E.safe_min}–${E.safe_max} Hz`;
+
+  const r = S.risk[k];
+  document.getElementById("kRisk").textContent = r == null ? "—" : r.toFixed(3);
+  document.getElementById("kRiskBar").style.width = r == null ? "0" : (r * 100) + "%";
+  document.getElementById("kRiskBar").style.background = r != null && cur >= CAL && r >= THR ? css("--thr") : css("--risk");
+
+  const card = document.getElementById("kAlarm"), av = document.getElementById("kAlarmVal"), as = document.getElementById("kAlarmSub");
+  const on = cur >= CAL && S.alarm[k] === 1 && !down;
+  card.classList.toggle("alarm", on);
+  const dC = document.getElementById("dCause"), dA = document.getElementById("dAct");
+  if (cur < CAL) { av.textContent = "CALIBRATING"; av.className = "k-val warn"; as.textContent = `day ${Math.floor(cur / 1440) + 1} of 30 — no labels used`; }
+  else if (on) {
+    const c = D.classes[S.cause[k]] || "—"; av.textContent = "⚠ ALARM"; av.className = "k-val warn";
+    as.innerHTML = `suspected ${pretty(c)}`;
+    dC.innerHTML = `${chip(c)} <span class="num" style="font-size:14px;color:var(--muted)">${Math.round((S.cause_p[k] || 0) * 100)}%</span>`;
+    dA.textContent = ACTION[c] || "";
+    showAdvice(k, c);
+  } else {
+    showAdvice(k, null);
+    av.textContent = down ? "—" : "NORMAL"; av.className = "k-val " + (down ? "" : "good"); as.textContent = down ? "pump is down" : "no alarm active";
+    dC.textContent = down ? "Pump down" : "No alarm"; dA.textContent = down ? "Cause is revealed in the event log." : "Watching. A cause is named when an alarm is raised.";
+  }
+
+  const passed = D.trips.filter(t => t.scored && t.m <= cur), caught = passed.filter(t => t.caught);
+  document.getElementById("kCaught").textContent = `${caught.length} / ${passed.length}`;
+  document.getElementById("kCaughtSub").textContent = `${passed.length - caught.length} missed so far`;
+  const leads = caught.map(t => t.lead).sort((a, b) => a - b);
+  document.getElementById("kLead").textContent = leads.length ? `${Math.round(leads[Math.floor((leads.length - 1) / 2)])} min` : "—";
+  const fa = D.alarms.filter(a => !a.matched && a.resolve <= cur).length, liveDays = Math.max(0, cur - CAL) / 1440;
+  document.getElementById("kFa").textContent = fa;
+  document.getElementById("kFaSub").textContent = liveDays > 7 ? `~${(fa / (liveDays / 30)).toFixed(1)} per month` : "per month: —";
+
+  for (const [key, , unit, nd] of SENSORS) { const v = S[key][k]; document.getElementById("v_" + key).textContent = v == null ? "—" : `${v.toFixed(nd)} ${unit}`; }
+  document.getElementById("tlInfo").textContent = `${D.trips.filter(t => t.m <= cur).length} shutdowns so far · ${D.alarms.filter(a => a.s <= cur).length} alarms`;
+}
+
+function showAdvice(k, c) {
+  const box = document.getElementById("dFreq"), v = document.getElementById("fVal"), s = document.getElementById("fSub"), be = document.getElementById("fBe");
+  if (c !== "UNDERLOAD") { box.classList.remove("show"); return; }
+  box.classList.add("show");
+  // hold the latest advice for 30 minutes so it doesn't flicker as the deficit
+  // hovers around the trigger
+  for (let j = k; j >= Math.max(0, k - 30 / B); j--) if (S.rec[j] != null && S.alarm[j] === 1) { k = j; break; }
+  const f = S.freq[k], d = S.deficit[k];
+  if (S.rec[k] == null) {
+    v.className = "fv hold"; v.textContent = `Hold ${f.toFixed(1)} Hz`;
+    s.textContent = `Intake pressure within ${FA.trigger} psi of what ${f.toFixed(1)} Hz should give — no change needed yet.`;
+  } else if (S.esc[k]) {
+    v.className = "fv esc"; v.textContent = `${f.toFixed(1)} → ${E.safe_min} Hz + inspect`;
+    s.textContent = `${Math.round(d)} psi below expected. Even the ${E.safe_min} Hz equipment floor cannot recover it — frequency alone will not save this well.`;
+  } else {
+    v.className = "fv"; v.textContent = `${f.toFixed(1)} → ${S.rec[k].toFixed(1)} Hz`;
+    s.textContent = `Intake pressure is ${Math.round(d)} psi below expected. Slowing ${(f - S.rec[k]).toFixed(1)} Hz gives it back (k = ${FA.k} psi/Hz, safe band ${E.safe_min}–${E.safe_max} Hz).`;
+  }
+  be.innerHTML = FA.breakeven_h
+    ? `Worth it only if a trip would keep the well down <b>&gt; ${Math.round(FA.breakeven_h)} h</b>. With a quick automatic restart, accept the trip; on a remote well waiting for a crew, slow it down.`
+    : `Slowing down costs production every minute — worth it only when a trip means a long wait for restart.`;
+}
+
+function showSummary() {
+  const s = D.summary, M = D.model;
+  document.getElementById("sumSub").textContent =
+    `Frozen ${M.detector} trained on wells ${M.trained_on.join(", ")}. Well ${D.well} was simulated after training and only ever predicted on.`;
+  document.getElementById("sumGrid").innerHTML = [
+    [`${s.caught} / ${s.trips}`, "shutdowns warned"], [`${s.median_lead != null ? Math.round(s.median_lead) : "—"} min`, "median warning"],
+    [`${s.cause_minutes ? Math.round(100 * s.cause_minutes_ok / s.cause_minutes) : 0}%`, `root cause correct (${s.cause_minutes_ok}/${s.cause_minutes} min)`],
+    [`${s.nuisance_per_month}`, "nuisance alarms / month"],
+  ].map(([b, t]) => `<div><b class="num">${b}</b><span>${t}</span></div>`).join("");
+  document.getElementById("sumNote").textContent =
+    `${s.useful} of the ${s.caught} warnings came at least 30 minutes ahead. ` +
+    `Scored after the 30-day calibration window (${s.calib_trips} shutdown${s.calib_trips === 1 ? "" : "s"} in that window not counted).`;
+  document.getElementById("sum").classList.add("show");
+}
+
+// ---------- controls ----------
+const speedLabel = () => demo ? "guided demo" : (SPEEDS.find(s => s[1] === speed) || ["", 0])[0];
+document.getElementById("speeds").innerHTML = SPEEDS.map(([l, v], i) => `<button data-i="${i}">${l}</button>`).join("");
+function setSpeed(v) { speed = v; demo = false; document.querySelectorAll("#speeds button").forEach(b => b.classList.toggle("on", SPEEDS[+b.dataset.i][1] === v)); dirty = true; }
+document.querySelectorAll("#speeds button").forEach(b => b.onclick = () => setSpeed(SPEEDS[+b.dataset.i][1]));
+function play(p) { playing = p; if (p && ended) { seek(0); } document.getElementById("bPlay").textContent = p ? "❚❚ Pause" : "▶ Play"; dirty = true; }
+document.getElementById("bPlay").onclick = () => play(!playing);
+document.getElementById("bReset").onclick = () => { demo = false; seek(0); play(false); document.getElementById("sum").classList.remove("show"); };
+document.getElementById("bNext").onclick = () => { const a = D.alarms.find(a => a.s > cur + 30); if (a) seek(a.s - 8 * 60); };
+document.getElementById("bDemo").onclick = () => {
+  document.getElementById("sum").classList.remove("show"); seek(0); win = 5 * 1440; demo = true;
+  document.querySelectorAll("#speeds button").forEach(b => b.classList.remove("on")); play(true);
+};
+document.getElementById("tl").onclick = ev => { const r = ev.currentTarget.getBoundingClientRect(); seek((ev.clientX - r.left) / r.width * N); };
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") { e.preventDefault(); play(!playing); }
+  if (e.key === "r" || e.key === "R") document.getElementById("bReset").click();
+  if (e.key === "n" || e.key === "N") document.getElementById("bNext").click();
+  if (e.key === "d" || e.key === "D") document.getElementById("bDemo").click();
+});
+
+// guided demo: calibration in ~4 s, six months at speed, slowing down to show one warned shutdown up close
+function demoSpeed(m) {
+  if (m < CAL) return CAL / 4;
+  const t = D.showcase; if (t == null) return FAST;
+  const d = t - m;
+  if (d > 1500) return FAST;
+  if (d > 540) return CLOSE + (FAST - CLOSE) * ((d - 540) / 960) ** 2;
+  if (d > -90) return CLOSE;
+  return Math.min(FAST, CLOSE + (-90 - d) * 6);
+}
+
+// ---------- loop ----------
+function frame(ts) {
+  if (playing) {
+    if (lastTs != null) {
+      const dt = Math.min(0.25, (ts - lastTs) / 1000), v = demo ? demoSpeed(cur) : speed;
+      cur += v * dt; processEvents(false); dirty = true;
+      if (cur >= N - 1) { cur = N - 1; play(false); ended = true; demo = false; showSummary(); }
+    }
+    lastTs = ts;
+  } else lastTs = null;
+  const v = demo ? demoSpeed(cur) : playing ? speed : win / 14, target = Math.max(8 * 60, Math.min(10 * 1440, v * 14));
+  if (Math.abs(target - win) > 1) { win += (target - win) * 0.06; dirty = true; }
+  if (dirty) {
+    drawChart(document.getElementById("risk"), "risk", { risk: true, lo: 0, hi: 1, color: css("--risk") });
+    const col = { cur: "#7dd3fc", pi: "#86efac", pd: "#f9a8d4", tm: "#fdba74", vib: "#c4b5fd", freq: "#e2e8f0" };
+    for (const [key] of SENSORS) drawChart(document.getElementById("c_" + key), key, { color: col[key] });
+    drawTimeline(); kpis(); dirty = false;
+  }
+  requestAnimationFrame(frame);
+}
+window.addEventListener("resize", () => dirty = true);
+setSpeed(1440);
+// Open paused on a frame worth a screenshot: one warned shutdown up close, just after
+// the pump tripped - alarm band, trip, warning arrow and the log entry all visible. #demo starts the guided demo, #t=<minute> jumps anywhere.
+const hash = location.hash.slice(1);
+if (hash.startsWith("t=")) seek(+hash.slice(2));
+else seek(D.showcase != null ? D.showcase + 50 : CAL + 7 * 1440);
+win = 12 * 60;
+if (hash === "demo") document.getElementById("bDemo").click();
+if (hash === "summary") { seek(N - 1); ended = true; win = 10 * 1440; showSummary(); }
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
