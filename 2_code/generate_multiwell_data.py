@@ -76,7 +76,7 @@ DATA = os.environ.get("ESP_DATA", os.path.join(os.path.dirname(HERE), "data"))
 CONFIG_PATH = os.environ.get("ESP_CONFIG", os.path.join(HERE, "wells_config.csv"))
 os.makedirs(DATA, exist_ok=True)
 OUT_DIR = DATA
-OUT_PATH = f"{OUT_DIR}/multiwell_scada_10wells_6mo.csv"
+OUT_PATH = f"{OUT_DIR}/esp_scada_16wells_6months.csv"
 
 
 def load_well_profiles(path=CONFIG_PATH):

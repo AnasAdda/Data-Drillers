@@ -34,7 +34,7 @@ python generate_multiwell_data.py
 ```
 
 This script is incremental: it checks which `well_id`s are already in
-`data/multiwell_scada_10wells_6mo.csv` and only simulates the ones that are
+`data/esp_scada_16wells_6months.csv` and only simulates the ones that are
 missing, then appends them. Adding one well takes a fraction of the time of
 a full regeneration.
 
@@ -57,6 +57,6 @@ schema (`well_id, split, timestamp, state, frequency_hz, motor_current_a,
 voltage_v, Ti_intake_temp_f, Tm_motor_temp_f, Pi_intake_psi,
 Pd_discharge_psi, vibration_g, shutdown_event, failure_cause, onset_cause,
 safe_min_hz, safe_max_hz`) for the real well(s), append/concat it into
-`data/multiwell_scada_10wells_6mo.csv`, add a matching row to `wells_config.csv`
+`data/esp_scada_16wells_6months.csv`, add a matching row to `wells_config.csv`
 (so equipment specs and train/test bookkeeping stay consistent), and run
 step 4. No model code changes needed either way.

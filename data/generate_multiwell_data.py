@@ -70,7 +70,7 @@ FREQ_RELATED = {"GAS_LOCK": True, "UNDERLOAD": False, "HIGH_TEMP": True,
                  "HIGH_DISCHARGE": True, "VIBRATION": False, "LOW_VOLTAGE": False}
 
 OUT_DIR = os.environ.get("ESP_DATA", os.path.dirname(os.path.abspath(__file__)))
-OUT_PATH = f"{OUT_DIR}/multiwell_scada_10wells_6mo.csv"
+OUT_PATH = f"{OUT_DIR}/esp_scada_16wells_6months.csv"
 CONFIG_PATH = f"{OUT_DIR}/wells_config.csv"
 
 

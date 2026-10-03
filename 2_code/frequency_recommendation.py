@@ -72,7 +72,7 @@ RECOVERY_MARGIN = 12.0   # psi of headroom to aim for above the trigger
 RESTORE_STEP = 0.02      # Hz per minute crept back toward BEP once recovered
 
 specs = pd.read_csv(f"{OUT}/well_equipment_specs.csv").set_index("well_id")
-df = pd.read_csv(f"{OUT}/multiwell_scada_10wells_6mo.csv", parse_dates=["timestamp"],
+df = pd.read_csv(f"{OUT}/esp_scada_16wells_6months.csv", parse_dates=["timestamp"],
                  usecols=["well_id", "split", "timestamp", "state", "frequency_hz",
                           "Pi_intake_psi", "shutdown_event", "failure_cause"])
 

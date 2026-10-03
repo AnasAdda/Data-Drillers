@@ -52,7 +52,7 @@ RESULTS = os.environ.get("ESP_RESULTS", os.path.join(os.path.dirname(HERE), "3_r
 os.makedirs(CHARTS, exist_ok=True); os.makedirs(RESULTS, exist_ok=True)
 DOCS = os.path.join(os.path.dirname(HERE), "5_documents")
 OUT = DATA
-DATA = f"{OUT}/multiwell_scada_10wells_6mo.csv"
+DATA = f"{OUT}/esp_scada_16wells_6months.csv"
 STORE = f"{OUT}/model_store/esp_models.joblib"
 
 

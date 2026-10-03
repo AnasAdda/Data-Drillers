@@ -1,7 +1,7 @@
 """
 Build the ESP live-monitor dashboard for a brand-new well.
 
-Loads the models frozen by Step 7 of ESP_Capstone_Colab.ipynb, simulates a well
+Loads the models frozen by Step 7 of ESP_Capstone_Full_Pipeline.ipynb, simulates a well
 the models have never seen (well 17 by default), scores it minute by minute with
 those frozen models, and writes ESP_Live_Dashboard.html - one self-contained page
 that replays the well as if it were a live SCADA feed, at any speed.
@@ -18,7 +18,7 @@ predict. The replay is honest in the same way a real control room is:
   * The actual failure cause is revealed only when the pump actually trips.
 
 Usage - from the notebook, so it runs in the same Python that trained the models:
-    %run ../6_dashboard/build_dashboard.py
+    %run ../5_dashboard/build_dashboard.py
 or from a terminal:
     python build_dashboard.py [--work ../data] [--well 17]
                               [--causes "UNDERLOAD:0.5;HIGH_DISCHARGE:0.5"]
@@ -56,7 +56,7 @@ RECOVERY_MARGIN = 12.0   # psi of headroom to aim for above the trigger
 STORE = os.path.join(args.work, "model_store", "esp_models.joblib")
 if not os.path.exists(STORE):
     sys.exit(f"No frozen models at {STORE}.\n"
-             "Run ESP_Capstone_Colab.ipynb through Step 7 (Save the trained models) first.")
+             "Run ESP_Capstone_Full_Pipeline.ipynb through Step 7 (Save the trained models) first.")
 store = joblib.load(STORE)
 WELL = args.well
 if WELL in [int(w) for w in store["trained_on_wells"]]:
@@ -90,7 +90,7 @@ def simulate_new_well():
                 "Pd_discharge_psi", "vibration_g", "shutdown_event", "failure_cause",
                 "onset_cause", "safe_min_hz", "safe_max_hz", "production_bpd"]
         stub = pd.DataFrame({"well_id": roster.loc[roster["well_id"] != WELL, "well_id"]})
-        stub.reindex(columns=cols).to_csv(os.path.join(tmp, "multiwell_scada_10wells_6mo.csv"),
+        stub.reindex(columns=cols).to_csv(os.path.join(tmp, "esp_scada_16wells_6months.csv"),
                                           index=False)
 
         # the scripts write to ESP_DATA and read the roster from ESP_CONFIG: both point at the scratch folder
@@ -103,7 +103,7 @@ def simulate_new_well():
             if p.returncode != 0:
                 sys.exit(p.stdout[-2000:] + p.stderr[-2000:])
 
-        df = pd.read_csv(os.path.join(tmp, "multiwell_scada_10wells_6mo.csv"),
+        df = pd.read_csv(os.path.join(tmp, "esp_scada_16wells_6months.csv"),
                          parse_dates=["timestamp"], low_memory=False)
         df = df[df["well_id"] == WELL].sort_values("timestamp").reset_index(drop=True)
         specs = pd.read_csv(os.path.join(tmp, "well_equipment_specs.csv")).set_index("well_id")

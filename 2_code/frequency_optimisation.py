@@ -53,7 +53,7 @@ OUT = DATA
 CALIB_DAYS = 30
 
 specs = pd.read_csv(f"{OUT}/well_equipment_specs.csv").set_index("well_id")
-meta = pd.read_csv(f"{OUT}/multiwell_scada_10wells_6mo.csv",
+meta = pd.read_csv(f"{OUT}/esp_scada_16wells_6months.csv",
                    usecols=["well_id", "split", "timestamp", "state", "frequency_hz", "Pi_intake_psi"],
                    parse_dates=["timestamp"])
 TEST_WELLS = sorted(meta.loc[meta["split"] == "test", "well_id"].unique())

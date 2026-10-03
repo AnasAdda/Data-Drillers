@@ -1,0 +1,7 @@
+numpy>=2.0
+pandas>=2.2
+scikit-learn>=1.5
+xgboost>=2.0
+matplotlib>=3.8
+joblib>=1.4
+reportlab>=4.0  # only for build_report.py

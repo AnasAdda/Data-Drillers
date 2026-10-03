@@ -103,7 +103,7 @@ OUT = DATA
 H = 30  # failure horizon in minutes - shorter horizon + run-life feature combined (best result)
 CAUSE_NAMES = ["GAS_LOCK", "UNDERLOAD", "HIGH_TEMP", "HIGH_DISCHARGE", "VIBRATION", "LOW_VOLTAGE"]
 
-df = pd.read_csv(f"{OUT}/multiwell_scada_10wells_6mo.csv", parse_dates=["timestamp"])
+df = pd.read_csv(f"{OUT}/esp_scada_16wells_6months.csv", parse_dates=["timestamp"])
 df = df.sort_values(["well_id", "timestamp"]).reset_index(drop=True)
 df = df.drop(columns=["Ti_intake_temp_f"])  # not used as a modeling feature - drop early to save memory
 specs = pd.read_csv(f"{OUT}/well_equipment_specs.csv").set_index("well_id")

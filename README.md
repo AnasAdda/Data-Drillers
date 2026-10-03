@@ -27,7 +27,7 @@ The test set was never used to make a single decision.
 
 ## Where to start
 
-**If you just want to run it:** open `1_run_in_colab/ESP_Capstone_Colab.ipynb` in Google
+**If you just want to run it:** open `1_notebooks/ESP_Capstone_Full_Pipeline.ipynb` in Google
 Colab and run the cells in order. Nothing needs downloading — the notebook generates the
 data from scratch. About 12 minutes on a free CPU runtime, plus 4 more for the frequency
 work in Step 5.
@@ -37,18 +37,14 @@ work in Step 5.
 `data/`, which already holds the dataset and the trained models, so Step 3 skips the data
 generation.
 
-> **Cloned from GitHub?** The dataset (`data/multiwell_scada_10wells_6mo.csv`, 431 MB) is
+> **Cloned from GitHub?** The dataset (`data/esp_scada_16wells_6months.csv`, 431 MB) is
 > stored with Git LFS. Install [Git LFS](https://git-lfs.com) before cloning, or run
 > `git lfs pull` afterwards. Without it you can rebuild the file with
 > `python 2_code/generate_multiwell_data.py` (about 5 minutes); the simulator is seeded, so
 > the result is identical.
 
 **If you just want to see the live demo:** double-click
-`6_dashboard/ESP_Live_Dashboard.html` and press **Guided demo**. No code, no internet.
-
-**If you want to read what was done:** `5_documents/ESP_Capstone_Summary.pdf` is the full
-16-page technical write-up, including the results, the charts, and what was tried and
-rejected.
+`5_dashboard/ESP_Live_Dashboard.html` and press **Guided demo**. No code, no internet.
 
 **If you want the raw numbers:** `3_results/results.txt`.
 
@@ -57,15 +53,14 @@ rejected.
 ## What is in this archive
 
 ```
-1_run_in_colab/     Self-contained notebook — the whole project in one file (Steps 0–8)
+1_notebooks/        Full-pipeline notebook (Steps 0–8) and a short new-well demo for Colab
 2_code/             The scripts, in the order they run
 3_results/          Official results (the Colab run the report quotes), earlier configurations
                     in comparisons/, and latest_run/ (written by every local training run)
 4_charts/           Official charts, the dashboard screenshot, and latest_run/ (charts from
                     every local training run)
-5_documents/        Report, presentation (with the demo video), team guide, PDF summary, action plan
-6_dashboard/        Live monitor: build_dashboard.py, its template, and ESP_Live_Dashboard.html
-data/               Everything the code reads: the 4.19M-row dataset (431 MB, via Git LFS), well roster,
+5_dashboard/        Live monitor: build_dashboard.py, its template, and ESP_Live_Dashboard.html
+data/               Everything the code reads: the 4.19M-row dataset (431 MB), well roster,
                     equipment specs, and the trained models (model_store/esp_models.joblib)
 ```
 
